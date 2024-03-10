@@ -4,8 +4,13 @@
 
  *******************************************************************************
 */
-// This trick allows to write serial messages that are specific debug messages and can be switched off
-#define DEBUG 0 //this activates or deactivates all debug messages
+#include "Adafruit_TCS34725.h"
+#include "Adafruit_DRV2605.h"
+#include <Wire.h>  // for I2C communication
+
+// This allows to write serial messages that are
+// specific debug messages and can be switched off
+#define DEBUG 0
 
 #if DEBUG == 1
 #define debug(x) Serial.print(x)
@@ -17,14 +22,14 @@
 
 //___
 
-#include <Wire.h> //needed for I2C communication
+//needed for I2C communication
 #define button1Pin 20
 #define led1Pin LED_BUILTIN
-volatile bool button1State = LOW; //this variable is used in an interrupt, for that it need to be volatile
+volatile bool button1State = LOW;  // this variable is used in an interrupt, for that it need to be volatile
 
 //___
 // This section prepares the use the TCA9548A I2C Multiplexer.
-#define TCAADDR 0x70 //device adress
+#define TCAADDR 0x70  // device adress
 #define tcaPinA 2
 #define tcaPinB 5
 
@@ -42,24 +47,23 @@ using namespace Menu;
 //___
 // The Adafruit TCS34725 colour sensor is set up here
 // including experimental autorange code
-#include "Adafruit_TCS34725.h"
-
 #define tcsLedPin 5
 const byte tcsInterruptPin = 7;
 volatile bool tcsReady = true;
 
 #define CLEARTHRESHHOLD 2000
 
-// TODO: Should be a struct?
-#define Red 1 // here are numbers (cases) for specific colours defined, to make it easier to use them in the programm
-#define Yellow 2
-#define Green 3
-#define Cyan 4
-#define Blue 5
-#define Magenta 6
-#define White 7
-#define Grey 8
-#define Black 9
+enum colours {
+  red,
+  yellow,
+  green,
+  cyan,
+  blue,
+  magenta,
+  white,
+  grey,
+  black,
+};
 
 byte colourCase = 0;
 
@@ -97,37 +101,37 @@ byte colourCase = 0;
 
 // class for TCS34725 autorange and colour correction
 class tcs34725 {
-  private:
-    struct tcs_agc {
-      tcs34725Gain_t ag;
-      uint8_t at;
-      uint16_t mincnt;
-      uint16_t maxcnt;
-    };
-    static const tcs_agc agc_lst[];
-    uint16_t agc_cur;
+private:
+  struct tcs_agc {
+    tcs34725Gain_t ag;
+    uint8_t at;
+    uint16_t mincnt;
+    uint16_t maxcnt;
+  };
+  static const tcs_agc agc_lst[];
+  uint16_t agc_cur;
 
-    void setGainTime(void);
+  void setGainTime(void);
 
-  public:
-    Adafruit_TCS34725 tcs; //Object creation for the tcs library class
-    tcs34725(void);
-    boolean begin(void);
-    void getRawDataInt(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
-    void calculateDN40(void);
-    bool autoRange(void);
-    bool autoRangeInt(void);
+public:
+  Adafruit_TCS34725 tcs;  //Object creation for the tcs library class
+  tcs34725(void);
+  boolean begin(void);
+  void getRawDataInt(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c);
+  void calculateDN40(void);
+  bool autoRange(void);
+  bool autoRangeInt(void);
 
-    boolean isAvailable, isSaturated;
-    uint16_t againx, atime, atime_ms;
-    uint16_t r, g, b, c;
-    uint16_t ir;
-    uint16_t r_comp, g_comp, b_comp, c_comp;
-    uint16_t saturation, saturation75;
-    float cratio, cpl, ct, lux, maxlux;
+  boolean isAvailable, isSaturated;
+  uint16_t againx, atime, atime_ms;
+  uint16_t r, g, b, c;
+  uint16_t ir;
+  uint16_t r_comp, g_comp, b_comp, c_comp;
+  uint16_t saturation, saturation75;
+  float cratio, cpl, ct, lux, maxlux;
 };
 
-tcs34725 tcs40; //Object creation for the autorange and colour correction class
+tcs34725 tcs40;  //Object creation for the autorange and colour correction class
 
 //
 // Gain/time combinations to use and the min/max limits for hysteresis
@@ -137,26 +141,26 @@ tcs34725 tcs40; //Object creation for the autorange and colour correction class
 // the start and end of the list.
 //
 const tcs34725::tcs_agc tcs34725::agc_lst[] = {
-  { TCS34725_GAIN_60X, TCS34725_INTEGRATIONTIME_614MS,     0, 20000 },
-  { TCS34725_GAIN_60X, TCS34725_INTEGRATIONTIME_154MS,  4990, 63000 },
+  { TCS34725_GAIN_60X, TCS34725_INTEGRATIONTIME_614MS, 0, 20000 },
+  { TCS34725_GAIN_60X, TCS34725_INTEGRATIONTIME_154MS, 4990, 63000 },
   { TCS34725_GAIN_16X, TCS34725_INTEGRATIONTIME_154MS, 16790, 63000 },
-  { TCS34725_GAIN_4X,  TCS34725_INTEGRATIONTIME_154MS, 15740, 63000 },
-  { TCS34725_GAIN_1X,  TCS34725_INTEGRATIONTIME_154MS, 15740, 0 }
+  { TCS34725_GAIN_4X, TCS34725_INTEGRATIONTIME_154MS, 15740, 63000 },
+  { TCS34725_GAIN_1X, TCS34725_INTEGRATIONTIME_154MS, 15740, 0 }
 };
-tcs34725::tcs34725() : agc_cur(0), isAvailable(0), isSaturated(0) {
+
+tcs34725::tcs34725()
+  : agc_cur(0), isAvailable(0), isSaturated(0) {
 }
 
 //___
 // The Adafruit DRV2605 haptic driver is set up here
-#include "Adafruit_DRV2605.h"
-
 Adafruit_DRV2605 drv;
 
-byte       menueActive = 0;
-byte       waveform = 0;      // active waveform to play
-byte       wfPause = 60;      // Pause between every repeat, 8 Slots therefore only 4 repeats possible
-byte       wfRepeat = 4;      // Number of repeats of waveform, 8 Slots therefore only 4 repeats possible
-byte       wfLib = 6;
+byte menueActive = 0;
+byte waveform = 0;  // active waveform to play
+byte wfPause = 60;  // Pause between every repeat, 8 Slots therefore only 4 repeats possible
+byte wfRepeat = 4;  // Number of repeats of waveform, 8 Slots therefore only 4 repeats possible
+byte wfLib = 6;
 const byte maxInput = 10;
 
 //___

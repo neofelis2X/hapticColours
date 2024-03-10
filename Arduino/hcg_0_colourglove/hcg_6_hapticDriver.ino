@@ -80,7 +80,7 @@ void playVibration(byte effect, byte repetitions) {
   for (int j = 0; j < repetitions; j++) {
     drv.setWaveform(j, effect);
   }
-  drv.setWaveform(repetitions + 1, 0);     // end waveform
+  drv.setWaveform(repetitions + 1, 0);  // end waveform
   drv.go();
 
   delay(200);
@@ -88,45 +88,45 @@ void playVibration(byte effect, byte repetitions) {
   for (int j = 0; j < repetitions; j++) {
     drv.setWaveform(j, effect);
   }
-  drv.setWaveform(repetitions + 1, 0);     // end waveform
+  drv.setWaveform(repetitions + 1, 0);  // end waveform
   drv.go();
 }
 
 void colourVibration() {
   switch (colourCase) {
-    case Red:
+    case red:
       playVibration(1, 1);
       break;
 
-    case Yellow:
+    case yellow:
       playVibration(10, 1);
       break;
 
-    case Green:
+    case green:
       playVibration(70, 1);
       break;
 
-    case Cyan:
+    case cyan:
       playVibration(27, 1);
       break;
 
-    case Blue:
+    case blue:
       playVibration(83, 1);
       break;
 
-    case Magenta:
+    case magenta:
       playVibration(64, 1);
       break;
 
-    case White:
+    case white:
       playVibration(1, 1);
       break;
 
-    case Grey:
+    case grey:
       playVibration(1, 1);
       break;
 
-    case Black:
+    case black:
       playVibration(1, 1);
       break;
 

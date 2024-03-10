@@ -34,7 +34,7 @@ void settingsMenue() {
   Serial.println(F("4 - Run LRA Calibration"));
   Serial.println(F("5 - Run Diagnosis"));
   Serial.println(F("6 - Exit"));
-  Serial.println(); //Prompt User for Input
+  Serial.println();  //Prompt User for Input
 
   menueActive = 1;
   int diag = 255;
@@ -42,7 +42,7 @@ void settingsMenue() {
   for (;;) {
     switch (readSerialInt()) {
       case 1:
-        Serial.println(F("Please enter desired number of repeats. Not more than 4.")); //Prompt User for Input
+        Serial.println(F("Please enter desired number of repeats. Not more than 4."));  //Prompt User for Input
         Serial.println();
         wfRepeat = readSerialInt();
 
@@ -55,7 +55,7 @@ void settingsMenue() {
         return;
 
       case 2:
-        Serial.println(F("Please enter desired pause between effects smaller than 1280 [ms] (1.2s).")); //Prompt User for Input
+        Serial.println(F("Please enter desired pause between effects smaller than 1280 [ms] (1.2s)."));  //Prompt User for Input
         Serial.println();
 
         wfPause = readSerialInt() / 10;
@@ -63,8 +63,7 @@ void settingsMenue() {
         if (wfPause == 0) {
           debugln(F("Couldn't read a valid input. Enter again."));
           continue;
-        }
-        else if (wfPause > 128) {
+        } else if (wfPause > 128) {
           debug(F("Pause cannot be more than 1.2s."));
           wfPause = 128;
         }
@@ -75,7 +74,7 @@ void settingsMenue() {
         return;
 
       case 3:
-        Serial.println(F("Please enter the waveform library to use. (1 - 7), 6 for LRA.")); //Prompt User for Input
+        Serial.println(F("Please enter the waveform library to use. (1 - 7), 6 for LRA."));  //Prompt User for Input
         Serial.println();
 
         wfLib = readSerialInt();
@@ -83,8 +82,7 @@ void settingsMenue() {
         if (wfLib == 0) {
           debugln(F("Couldn't read a valid input. Enter again."));
           continue;
-        }
-        else if (wfLib > 7) {
+        } else if (wfLib > 7) {
           debugln(F("Has to be between 1 and 7"));
           wfLib = 6;
         }
@@ -105,8 +103,8 @@ void settingsMenue() {
           Serial.println(F("Calibration FAILED."));
         }
         diag = 255;
-        drv.useLRA();              // pick an actuator type
-        drv.setMode(0);            // haptic effects triggered by I2C register write
+        drv.useLRA();    // pick an actuator type
+        drv.setMode(0);  // haptic effects triggered by I2C register write
         return;
 
       case 5:
@@ -121,8 +119,8 @@ void settingsMenue() {
           Serial.println(F("Test FAILED, Actuator is not present or is shorted, timing out, or giving out–of-range back-EMF."));
         }
         diag = 255;
-        drv.useLRA();              // pick an actuator type
-        drv.setMode(0);            // haptic effects triggered by I2C register write
+        drv.useLRA();    // pick an actuator type
+        drv.setMode(0);  // haptic effects triggered by I2C register write
         return;
 
       case 6:
@@ -140,14 +138,14 @@ bool menueCheck() {
     waveform = 0;
     settingsMenue();
     return 1;
-  }  else {
+  } else {
     return 0;
   }
 }
 
 int readSerialInt() {
 
-  static char input_line [maxInput];
+  static char input_line[maxInput];
   int inputInt;
   static unsigned int input_pos = 0;
   byte eoL = 0;
@@ -155,7 +153,7 @@ int readSerialInt() {
   debugln(F("db readSerialInt start"));
   debugln(F("db waiting for input..."));
 
-  int  timeout = millis();
+  int timeout = millis();
   byte inByte;
   while (millis() - timeout < 50000) {
 
@@ -163,27 +161,27 @@ int readSerialInt() {
       inByte = Serial.read();
       switch (inByte) {
 
-        case '\n': //end of line is registered
-          input_line [input_pos++] = inByte;
+        case '\n':  //end of line is registered
+          input_line[input_pos++] = inByte;
           eoL = 1;
           break;
 
-        case '\r': //carriage return gets ignored
+        case '\r':  //carriage return gets ignored
           debugln(F("db CR"));
           break;
 
-        default: //any other input is registered until the eoL or max amount is reached
+        default:  //any other input is registered until the eoL or max amount is reached
           if (input_pos < (maxInput - 1)) {
-            input_line [input_pos++] = inByte;
+            input_line[input_pos++] = inByte;
           }
           break;
       }
     }
 
-    if (eoL == 1) { //when End of Line was registered, wrap it up and send it home
-      input_line [input_pos] = 0;
-      input_pos = 0; //reset buffer
-      eoL = 0;      // reset End of Line
+    if (eoL == 1) {  //when End of Line was registered, wrap it up and send it home
+      input_line[input_pos] = 0;
+      input_pos = 0;  //reset buffer
+      eoL = 0;        // reset End of Line
 
       debug(F("db readSerialInt parsed input - input is: "));
       debugln(input_line);
@@ -204,19 +202,19 @@ bool runDiagnosis() {
 
   int diag = 255;
   Serial.println(F("Running DRV2605L Testing..."));
-  drv.setMode(6); // go into diagnosis mode
-  drv.go(); // run the diagnosis
-  diag = drv.readRegister8(DRV2605_REG_STATUS); // read the register that holds the diagnosis bit
+  drv.setMode(6);                                // go into diagnosis mode
+  drv.go();                                      // run the diagnosis
+  diag = drv.readRegister8(DRV2605_REG_STATUS);  // read the register that holds the diagnosis bit
   Serial.print(F("Diagnosis says: "));
   if (bitRead(diag, 3) == 0) {
     Serial.println(F("Test PASSED, Actuator is functioning normally."));
-    drv.useERM();              // pick an actuator type
-    drv.setMode(0);            // mode is set back to internal trigger
+    drv.useERM();    // pick an actuator type
+    drv.setMode(0);  // mode is set back to internal trigger
     return 1;
   } else {
     Serial.println(F("Test FAILED, Actuator is not present or is shorted, timing out, or giving out–of-range back-EMF."));
-    drv.useERM();              // pick an actuator type
-    drv.setMode(0);            // mode is set back to internal trigger
+    drv.useERM();    // pick an actuator type
+    drv.setMode(0);  // mode is set back to internal trigger
     return 0;
   }
 }
@@ -231,13 +229,13 @@ bool runCalibration() {
   Serial.print(F("Diagnosis says: "));
   if (bitRead(diag, 3) == 0) {
     Serial.println(F("Calibration PASSED."));
-    drv.useERM();              // pick an actuator type
-    drv.setMode(0);            // mode is set back to internal trigger
+    drv.useERM();    // pick an actuator type
+    drv.setMode(0);  // mode is set back to internal trigger
     return 1;
   } else {
     Serial.println(F("Calibration FAILED."));
-    drv.useERM();              // pick an actuator type
-    drv.setMode(0);            // mode is set back to internal trigger
+    drv.useERM();    // pick an actuator type
+    drv.setMode(0);  // mode is set back to internal trigger
     return 0;
   }
 }

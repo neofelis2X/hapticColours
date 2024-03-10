@@ -12,6 +12,7 @@ void tcaSelect(uint8_t i) {
   Wire.beginTransmission(TCAADDR);
   Wire.write(1 << i);
   Wire.endTransmission();
+  
   debug(F("Multiplexer Port has been changed to "));
   debugln(i);
 }

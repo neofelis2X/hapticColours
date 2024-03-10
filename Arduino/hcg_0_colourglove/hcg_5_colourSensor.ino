@@ -30,11 +30,13 @@
 boolean tcs34725::begin(void) {
   debugln(F("\tdb tcs34725::begin started."));
   tcs = Adafruit_TCS34725(agc_lst[agc_cur].at, agc_lst[agc_cur].ag);
-  if (isAvailable = tcs.begin()) {
+
+  if (isAvailable == tcs.begin()) {
     debugln(F("\tdb tcs.begin() finished positive."));
     debugln(F("\tdb setGainTime is about to run."));
     setGainTime();
   }
+
   debug(F("\tdb value of isAvailable is: "));
   debugln(isAvailable);
   return (isAvailable);
@@ -110,7 +112,7 @@ bool tcs34725::autoRange(void) {
     else break;
 
     setGainTime();
-    delay((256 - atime) * 2.4 * 2); // shock absorber
+    delay((256 - atime) * 2.4 * 2);  // shock absorber
     tcs.getRawData(&r, &g, &b, &c);
     break;
   }
@@ -164,8 +166,8 @@ void tcs34725::calculateDN40(void) {
   cratio = float(ir) / float(c);
 
   saturation = ((256 - atime) > 63) ? 65535 : 1024 * (256 - atime);
-  saturation75 = (atime_ms < 150) ? (saturation - saturation / 4) : saturation; //if IntTime is lower 150 than 75%sat otherwise 100%sat
-  isSaturated = (atime_ms < 150 && c > saturation75) ? 1 : 0; //if
+  saturation75 = (atime_ms < 150) ? (saturation - saturation / 4) : saturation;  //if IntTime is lower 150 than 75%sat otherwise 100%sat
+  isSaturated = (atime_ms < 150 && c > saturation75) ? 1 : 0;                    //if
   cpl = (atime_ms * againx) / (TCS34725_GA * TCS34725_DF);
   maxlux = 65535 / (cpl * 3);
 
@@ -177,8 +179,7 @@ void tcs34725::calculateDN40(void) {
 
 //tcs.getRawData() does a delay(Integration_Time) after the sensor readout.
 //  We don't need to wait for the next integration cycle because we receive an interrupt when the integration cycle is complete
-void tcs34725::getRawDataInt(uint16_t *r, uint16_t *g, uint16_t *b, uint16_t *c)
-{
+void tcs34725::getRawDataInt(uint16_t* r, uint16_t* g, uint16_t* b, uint16_t* c) {
   *r = tcs.read16(TCS34725_RDATAL);
   *g = tcs.read16(TCS34725_GDATAL);
   *b = tcs.read16(TCS34725_BDATAL);
@@ -195,12 +196,20 @@ void colourInterrupt() {
     colorTemp = tcs40.tcs.calculateColorTemperature(r, g, b);
     lux = tcs40.tcs.calculateLux(r, g, b);
 
-    Serial.print(F("Color Temp: ")); Serial.print(colorTemp, DEC); Serial.print(F(" K - "));
-    Serial.print(F("Lux: ")); Serial.print(lux, DEC); Serial.print(F(" - "));
-    Serial.print(F("R: ")); Serial.print(r, DEC);
-    Serial.print(F(" G: ")); Serial.print(g, DEC);
-    Serial.print(F(" B: ")); Serial.print(b, DEC);
-    Serial.print(F(" C: ")); Serial.print(c, DEC);
+    Serial.print(F("Color Temp: "));
+    Serial.print(colorTemp, DEC);
+    Serial.print(F(" K - "));
+    Serial.print(F("Lux: "));
+    Serial.print(lux, DEC);
+    Serial.print(F(" - "));
+    Serial.print(F("R: "));
+    Serial.print(r, DEC);
+    Serial.print(F(" G: "));
+    Serial.print(g, DEC);
+    Serial.print(F(" B: "));
+    Serial.print(b, DEC);
+    Serial.print(F(" C: "));
+    Serial.print(c, DEC);
     Serial.println(F("  "));
     Serial.flush();
 
@@ -302,12 +311,14 @@ void colourProtocol() {
 //___
 //This mappings are used to convert the colour values to the right form, for photoshop or other target systems
 
-byte mapUintTo255(float value, float range) { //input has to be float values, because integer calculation wont work!
+byte mapUintTo255(float value, float range) {  //input has to be float values, because integer calculation wont work!
   value /= range;
   value *= 256;
-  if (value > 255) value = 255;
+  if (value > 255)
+    value = 255;
   float roundValue = (value - int(value)) * 10;
-  if (roundValue > 5) value = byte(value) + 1;
+  if (roundValue > 5)
+    value = byte(value) + 1;
   else value = byte(value);
   return value;
 }
@@ -347,10 +358,10 @@ float step(float e, float x) {
 // HSV->RGB conversion based on GLSL version
 // expects hsv channels defined in 0.0 .. 1.0 interval
 float* hsv2rgb(float h, float s, float b, float* rgb) {
-  if (h > 1 || s > 1 || b > 1) { //this checks if the values are entered in the right format and range
-    rgb[0] =  0;
-    rgb[1] =  0;
-    rgb[2] =  0;
+  if (h > 1 || s > 1 || b > 1) {  //this checks if the values are entered in the right format and range
+    rgb[0] = 0;
+    rgb[1] = 0;
+    rgb[2] = 0;
 
     debugln(F("HSV input didnt fit RGB converter. No output."));
     return rgb;
@@ -364,11 +375,11 @@ float* hsv2rgb(float h, float s, float b, float* rgb) {
 
 // RGB->HSV conversion based on GLSL version
 // expects RGB channels defined in 0.0 .. 1.0 interval
-float* rgb2hsv(float r, float g, float b, float* hsv) { //a snippet of Karsten Schmidt alias postspectacular
-  if (r > 1 || g > 1 || b > 1) { //this checks if the values are entered in the right format and range
-    hsv[0] =  0;
-    hsv[1] =  0;
-    hsv[2] =  0;
+float* rgb2hsv(float r, float g, float b, float* hsv) {  //a snippet of Karsten Schmidt alias postspectacular
+  if (r > 1 || g > 1 || b > 1) {                         //this checks if the values are entered in the right format and range
+    hsv[0] = 0;
+    hsv[1] = 0;
+    hsv[2] = 0;
 
     debugln(F("RGB input didnt fit HSV converter. No output."));
     return hsv;
@@ -384,69 +395,60 @@ float* rgb2hsv(float r, float g, float b, float* hsv) { //a snippet of Karsten S
   float qz = mix(pw, pz, s);
   float qw = mix(r, px, s);
   float d = qx - min(qw, py);
-  hsv[0] = (abs(qz + (qw - py) / (6.0 * d + 1e-10))) * 360; //outputs in a range of 0 - 360°
-  hsv[1] = (d / (qx + 1e-10)) * 100; //outputs in a range of 0 - 100%
-  hsv[2] = qx * 100; //outputs in a range of 0 - 100%
+  hsv[0] = (abs(qz + (qw - py) / (6.0 * d + 1e-10))) * 360;  //outputs in a range of 0 - 360°
+  hsv[1] = (d / (qx + 1e-10)) * 100;                         //outputs in a range of 0 - 100%
+  hsv[2] = qx * 100;                                         //outputs in a range of 0 - 100%
   debugln(F("\tdb rgb2hsv completed successfull."));
   return hsv;
 }
 
-bool inRange(float val, int minVal, int maxVal)
-{
+bool inRange(float val, int minVal, int maxVal) {
   return ((minVal <= val) && (val < maxVal));
 }
 
 void noteColour(float* hsv) {
 
   if (inRange(hsv[1], 0, 15) && inRange(hsv[2], 90, 100)) {
-    colourCase = White; //the measurement is almost white or white
+    colourCase = white;  //the measurement is almost white or white
     Serial.print("The measuared colour is: ");
     Serial.println("White");
+    Serial.println(white);
     return;
-  }
-  else if (inRange(hsv[1], 0, 15) && inRange(hsv[2], 25, 90)) {
-    colourCase = Grey; //the measurement has a low colour saturation
+  } else if (inRange(hsv[1], 0, 15) && inRange(hsv[2], 25, 90)) {
+    colourCase = grey;  //the measurement has a low colour saturation
     Serial.print("The measuared colour is: ");
     Serial.println("Grey");
     return;
-  }
-  else if (inRange(hsv[2], 0, 25)) {
-    colourCase = Black; //the measurement is almost black or black
+  } else if (inRange(hsv[2], 0, 25)) {
+    colourCase = black;  //the measurement is almost black or black
     Serial.print("The measuared colour is: ");
     Serial.println("Black");
     return;
-  }
-  else if (inRange(hsv[0], 0, 30) || inRange(hsv[0], 330, 361)) {
-    colourCase = Red; //the measurement is a reddish colour tone
+  } else if (inRange(hsv[0], 0, 30) || inRange(hsv[0], 330, 361)) {
+    colourCase = red;  //the measurement is a reddish colour tone
     Serial.print("The measuared colour is: ");
     Serial.println("Red");
-  }
-  else if (inRange(hsv[0], 30, 90)) {
-    colourCase = Yellow; //the measurement is a yellowish colour tone
+  } else if (inRange(hsv[0], 30, 90)) {
+    colourCase = yellow;  //the measurement is a yellowish colour tone
     Serial.print("The measuared colour is: ");
     Serial.println("Yellow");
-  }
-  else if (inRange(hsv[0], 90, 150)) {
-    colourCase = Green; //the measurement is a greenish colour tone
+  } else if (inRange(hsv[0], 90, 150)) {
+    colourCase = green;  //the measurement is a greenish colour tone
     Serial.print("The measuared colour is: ");
     Serial.println("Green");
-  }
-  else if (inRange(hsv[0], 150, 210)) {
-    colourCase = Cyan; //the measurement is a cyanish colour tone
+  } else if (inRange(hsv[0], 150, 210)) {
+    colourCase = cyan;  //the measurement is a cyanish colour tone
     Serial.print("The measuared colour is: ");
     Serial.println("Cyan");
-  }
-  else if (inRange(hsv[0], 210, 270)) {
-    colourCase = Blue; //the measurement is a blueish colour tone
+  } else if (inRange(hsv[0], 210, 270)) {
+    colourCase = blue;  //the measurement is a blueish colour tone
     Serial.print("The measuared colour is: ");
     Serial.println("Blue");
-  }
-  else if (inRange(hsv[0], 270, 330)) {
-    colourCase = Magenta; //the measurement is a magentish colour tone
+  } else if (inRange(hsv[0], 270, 330)) {
+    colourCase = magenta;  //the measurement is a magentish colour tone
     Serial.print("The measuared colour is: ");
     Serial.println("Magenta");
-  }
-  else {
+  } else {
     Serial.println("No valid colour tone measurement!");
   }
 }
